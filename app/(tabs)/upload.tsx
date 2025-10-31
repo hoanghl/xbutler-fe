@@ -2,11 +2,11 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function HomeScreen() {
+export default function UploadScreen() {
   return (
     <SafeAreaView style={styles.outerView}>
       <View style={styles.view}>
-        <Text style={styles.title}>Home</Text>
+        <Text style={styles.title}>Upload</Text>
       </View>
     </SafeAreaView>
   );
