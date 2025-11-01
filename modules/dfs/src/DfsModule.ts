@@ -1,12 +1,13 @@
-import { NativeModule, requireNativeModule } from 'expo';
+import { NativeModule, requireNativeModule } from "expo";
 
-import { DfsModuleEvents } from './Dfs.types';
+import { DfsModuleEvents } from "./Dfs.types";
 
 declare class DfsModule extends NativeModule<DfsModuleEvents> {
   PI: number;
-  hello(): string;
-  setValueAsync(value: string): Promise<void>;
+  stopDFS(): void;
+  startDFS(rawIpDNS: number[]): void;
+  getDFSStatus(): number;
 }
 
 // This call loads the native module object from the JSI.
-export default requireNativeModule<DfsModule>('Dfs');
+export default requireNativeModule<DfsModule>("Dfs");

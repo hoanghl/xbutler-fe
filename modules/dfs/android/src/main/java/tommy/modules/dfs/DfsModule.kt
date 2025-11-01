@@ -1,34 +1,63 @@
 package tommy.modules.dfs
 
+import android.content.Intent
+import android.net.*
+import android.util.Log
+import com.facebook.react.bridge.ReadableArray
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import java.net.*
+import java.nio.channels.*
+import java.nio.file.*
+import kotlinx.coroutines.*
+import tommy.modules.dfs.logging.*
+import tommy.modules.dfs.network.UDS
 
 class DfsModule : Module() {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
+  val socket = LocalServerSocket("central.sock")
+  val udsController = UDS(this@DfsModule)
+
+  @kotlin.time.ExperimentalTime
   override fun definition() = ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a
-    // string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for
-    // clarity.
-    // The module will be accessible from `requireNativeModule('Dfs')` in JavaScript.
     Name("Dfs")
 
-    // Defines constant property on the module.
-    Constant("PI") { Math.PI }
-
     // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+    Events("log")
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") { "Hello world! 👋" }
+    Function("startDFS") { rawIpDNS: ReadableArray, portDNS: Int, portReceiver: Int ->
+      // =================================================
+      // Start service
+      // =================================================
+      if (rawIpDNS.size() != 4) {
+        Log.e(
+                "DFS",
+                "Received octet array of IP should have 4 elements. Got only ${rawIpDNS.size()} elements"
+        )
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { value: String ->
-      // Send an event to JavaScript.
-      sendEvent("onChange", mapOf("value" to value))
+        return@Function
+      }
+
+      val reactContext = appContext.reactContext!!
+      val intent =
+              Intent(reactContext, DFSService::class.java).apply {
+                putExtra("IpDNS", rawIpDNS.toArrayList())
+                putExtra("portDNS", portDNS)
+                putExtra("portReceiver", portReceiver)
+              }
+      reactContext.startService(intent)
+
+      // =================================================
+      // Start UDS server to receive log
+      // =================================================
+      udsController.startServer()
+    }
+
+    Function("stopDFS") {
+      runBlocking {
+        // TODO: HoangLe [Nov-01]: Send packet to stop thread:Processor of DFS service
+
+        udsController.stopUDSServer()
+      }
     }
   }
 }
