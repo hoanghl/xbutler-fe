@@ -21,7 +21,8 @@ class DFSCommunicator {
         // =================================================
         // 1. Craft packet 'OPERATION_STOP'
         // =================================================
-        val packetStop = Packet()
+        // TODO: HoangLe [Nov-01]: Continue implementing
+        // val packetStop = Packet()
 
         // =================================================
         // 2. Send packet to DFS

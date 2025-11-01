@@ -1,7 +1,5 @@
-package com.tommy.network
+package tommy.modules.dfs.network
 
-import com.tommy.logger
-import com.tommy.logging.*
 import io.github.oshai.kotlinlogging.*
 import java.net.*
 import java.nio.ByteBuffer
@@ -9,6 +7,8 @@ import java.nio.channels.*
 import java.nio.file.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.launch
+import tommy.modules.dfs.logger
+import tommy.modules.dfs.logging.*
 
 class UDS(udsPath: Path = Paths.get("/tmp/central.sock")) {
     val udsPath = udsPath

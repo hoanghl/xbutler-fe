@@ -1,4 +1,4 @@
-package com.tommy.network
+package tommy.modules.dfs.network
 
 enum class PacketType {
     Heartbeat,
