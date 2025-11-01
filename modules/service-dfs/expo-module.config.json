@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["ServiceDfsModule"]
+  },
+  "android": {
+    "modules": ["tommy.tommy.servicedfs.ServiceDfsModule"]
+  }
+}
