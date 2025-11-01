@@ -1,3 +1,4 @@
+import { IP } from "@/models/ip";
 import { useState } from "react";
 import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
 
@@ -6,12 +7,60 @@ import Toast from "react-native-toast-message";
 
 export default function DFSSettingScreen() {
   const [isStarted, setIsStarted] = useState<boolean>(false);
-  const [portDNS, setPortDNS] = useState<number>();
-  const [portReceiver, setPortReceiver] = useState<number>();
-  const [ipDNS, setIpDNS] = useState<string>();
+  const [portDNS, setPortDNS] = useState<number>(0);
+  const [portReceiver, setPortReceiver] = useState<number>(0);
+  const [ipDNS, setIpDNS] = useState<string>("");
 
-  const parseIp = (text: String): boolean => {
-    return false;
+  const _parsePort = (text: string): number | null => {
+    try {
+      const port = parseInt(text);
+      if (port < 0 || port > 65535) {
+        console.error(
+          `Error as parsing port: Port not in inclusive range [0, 65535]: ${port}`
+        );
+        return null;
+      }
+      return port;
+    } catch (error) {
+      console.error(`Error as parsing port: ${error}`);
+
+      return null;
+    }
+  };
+
+  const onStartDFS = () => {
+    // Parse IP and ports
+    const ip = IP.parseFromString(ipDNS);
+    if (ip === null) {
+      Toast.show({
+        type: "error",
+        text1: "Error as parsing IP",
+      });
+
+      return;
+    }
+
+    if (portDNS < 0 || portDNS > 65535) {
+      Toast.show({
+        type: "error",
+        text1: "Error as parsing port DNS",
+      });
+
+      return;
+    }
+
+    if (portReceiver < 0 || portReceiver > 65535) {
+      Toast.show({
+        type: "error",
+        text1: "Error as parsing port Receiver",
+      });
+
+      return;
+    }
+
+    // Triger DFS
+    setIsStarted(!isStarted);
+    // TODO: HoangLe [Nov-01]: Trigger DFS
   };
 
   const renderStatus = () => (
@@ -25,17 +74,7 @@ export default function DFSSettingScreen() {
       <Text style={{ fontWeight: "bold", fontSize: 28 }}>DFS</Text>
       <Switch
         trackColor={{ false: "#767577", true: "#10c10080" }}
-        onValueChange={() => {
-          if (!ipDNS || !parseIp(ipDNS)) {
-            Toast.show({
-              type: "error",
-              text1: "Error as parsing IP",
-              text2: "Ama",
-            });
-          } else {
-            setIsStarted(!isStarted);
-          }
-        }}
+        onValueChange={onStartDFS}
         value={isStarted}
       />
     </View>
@@ -49,6 +88,7 @@ export default function DFSSettingScreen() {
         style={
           isStarted ? styles.textInputUnedittable : styles.textInputEdittable
         }
+        onChangeText={(text) => setIpDNS(text)}
         editable={!isStarted}
       />
     </View>
