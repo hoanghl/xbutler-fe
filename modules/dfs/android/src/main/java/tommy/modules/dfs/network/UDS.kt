@@ -1,64 +1,34 @@
 package tommy.modules.dfs.network
 
-import io.github.oshai.kotlinlogging.*
+import android.net.*
+import android.util.Log
 import java.net.*
-import java.nio.ByteBuffer
 import java.nio.channels.*
 import java.nio.file.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.launch
-import tommy.modules.dfs.logger
 import tommy.modules.dfs.logging.*
 
-class UDS(udsPath: Path = Paths.get("/tmp/central.sock")) {
+class UDS(udsPath: String = "central.sock") {
     val udsPath = udsPath
-    val address = UnixDomainSocketAddress.of(udsPath)
+    val socket = LocalServerSocket(udsPath)
 
     @kotlin.time.ExperimentalTime
     fun startServer(): Unit = runBlocking {
-        if (Files.exists(udsPath)) {
-            Files.delete(udsPath)
-        }
-
-        val server = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
-
-        server.bind(address)
-
-        logger.info { "Server listenning on $udsPath" }
+        Log.i("DFS", "Server listenning on $udsPath")
 
         // CoroutineScope(Dispatchers.Default).launch {
         launch(Dispatchers.IO) {
             while (true) {
-                val client = server.accept()
-                val buffer = ByteBuffer.allocate(1024)
+                val client = socket.accept()!!
                 val builder = StringBuilder()
 
-                logger.info { "Server receives incoming" }
+                Log.i("DFS", "Server receives incoming")
 
-                var isEOP = false // flag for end of packet
-                while (true) {
-                    val n = client.read(buffer)
-                    buffer.flip()
-
-                    if (n == 0) {
-                        isEOP = true
-                    }
-
-                    while (buffer.hasRemaining()) {
-                        val byte = buffer.get()
-                        when (byte.toInt()) {
-                            0 -> {
-                                isEOP = true
-                                break
-                            }
-                            else -> {
-                                builder.append(byte.toInt().toChar())
-                            }
-                        }
-                    }
-
-                    if (isEOP) {
-                        break
+                client.inputStream.bufferedReader().use { reader ->
+                    val byte = reader.read()
+                    if (byte != 0 && byte != -1) {
+                        builder.append(byte.toChar())
                     }
                 }
 
@@ -67,7 +37,7 @@ class UDS(udsPath: Path = Paths.get("/tmp/central.sock")) {
                 if (msg == null) {
                     continue
                 }
-                logger.info { "Received: ${msg.level}" }
+                Log.i("DFS", "Received: ${msg.level}")
             }
         }
     }

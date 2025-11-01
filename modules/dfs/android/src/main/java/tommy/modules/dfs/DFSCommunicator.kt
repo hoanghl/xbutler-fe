@@ -1,12 +1,31 @@
 package expo.modules.myrustmodule
 
+import android.app.Service
+import android.content.Intent
 import android.net.*
+import android.os.IBinder
 
 /**
  * Handle communication actions with DFS via UDS including starting/stopping DFS and receiving log
  * message from DFS
  */
-class DFSCommunicator {
+class DFSCommunicator : Service() {
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // serviceEntity.onStart()
+        // TODO: HoangLe [Nov-01]: Implement this
+
+        return START_STICKY
+    }
+
+    override fun onDestroy() {
+        // TODO: HoangLe [Nov-01]: Implement this
+        // serviceEntity.onStop()
+    }
+
+    override fun onBind(p0: Intent?): IBinder? {
+        return null
+    }
 
     lateinit var threadDFS: Thread
     var clientSocket = LocalSocket()

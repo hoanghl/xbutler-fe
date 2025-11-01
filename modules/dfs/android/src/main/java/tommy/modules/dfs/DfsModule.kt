@@ -2,9 +2,6 @@ package tommy.modules.dfs
 
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import io.github.oshai.kotlinlogging.KotlinLogging
-
-val logger = KotlinLogging.logger {}
 
 class DfsModule : Module() {
   // Each module class must implement the definition function. The definition consists of components
