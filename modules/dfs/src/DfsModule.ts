@@ -6,7 +6,7 @@ declare class DfsModule extends NativeModule<DfsModuleEvents> {
   PI: number;
   stopDFS(): void;
   startDFS(rawIpDNS: number[]): void;
-  getDFSStatus(): number;
+  getDFSStatus(): string;
 }
 
 // This call loads the native module object from the JSI.

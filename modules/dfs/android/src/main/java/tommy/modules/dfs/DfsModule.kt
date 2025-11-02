@@ -11,53 +11,79 @@ import java.nio.channels.*
 import java.nio.file.*
 import kotlinx.coroutines.*
 import tommy.modules.dfs.logging.*
-import tommy.modules.dfs.network.UDS
+import tommy.modules.dfs.network.*
 
 class DfsModule : Module() {
-  val socket = LocalServerSocket("central.sock")
-  val udsController = UDS(this@DfsModule)
+    val udsController = UDS(this@DfsModule)
 
-  @kotlin.time.ExperimentalTime
-  override fun definition() = ModuleDefinition {
-    Name("Dfs")
+    lateinit var ipDNS: String
+    var portDNS: Int = 0
+    var portReceiver: Int = 0
 
-    // Defines event names that the module can send to JavaScript.
-    Events("log")
+    @kotlin.time.ExperimentalTime
+    override fun definition() = ModuleDefinition {
+        Name("Dfs")
 
-    Function("startDFS") { rawIpDNS: ReadableArray, portDNS: Int, portReceiver: Int ->
-      // =================================================
-      // Start service
-      // =================================================
-      if (rawIpDNS.size() != 4) {
-        Log.e(
-                "DFS",
-                "Received octet array of IP should have 4 elements. Got only ${rawIpDNS.size()} elements"
-        )
+        // Defines event names that the module can send to JavaScript.
+        Events("log")
 
-        return@Function
-      }
+        Function("startDFS") { rawIpDNS: String, portDNS: Int, portReceiver: Int ->
+            if (!checkIp(rawIpDNS)) {
+                Log.e("DFS", "Invalid passed Ip")
 
-      val reactContext = appContext.reactContext!!
-      val intent =
-              Intent(reactContext, DFSService::class.java).apply {
-                putExtra("IpDNS", rawIpDNS.toArrayList())
-                putExtra("portDNS", portDNS)
-                putExtra("portReceiver", portReceiver)
-              }
-      reactContext.startService(intent)
+                return@Function
+            }
+            this@DfsModule.ipDNS = rawIpDNS
+            this@DfsModule.portDNS = portDNS
+            this@DfsModule.portReceiver = portReceiver
 
-      // =================================================
-      // Start UDS server to receive log
-      // =================================================
-      udsController.startServer()
+            // =================================================
+            // Start service
+            // =================================================
+
+            val reactContext = appContext.reactContext!!
+            val intent =
+                    Intent(reactContext, DFSService::class.java).apply {
+                        putExtra("IpDNS", ipDNS)
+                        putExtra("portDNS", portDNS)
+                        putExtra("portReceiver", portReceiver)
+                    }
+            reactContext.startService(intent)
+
+            // =================================================
+            // Start UDS server to receive log
+            // =================================================
+            udsController.startUDSServer()
+        }
+
+        Function("stopDFS") {
+            runBlocking {
+                val reactContext = appContext.reactContext!!
+                reactContext.stopService(Intent(reactContext, DFSService::class.java))
+
+                udsController.stopUDSServer()
+            }
+        }
+
+        Function("getDFSStatus") {
+            return@Function TCP.fetchDFSStatus(portReceiver).name
+        }
     }
 
-    Function("stopDFS") {
-      runBlocking {
-        // TODO: HoangLe [Nov-01]: Send packet to stop thread:Processor of DFS service
+    /**
+     * Check if received IP is IpV4 formt
+     */
+    private fun checkIp(rawIp: String): Boolean {
+        var isValidIp = true
+        try {
+            val output = rawIp.split(".").map { it -> it.toByte() }
+            if (output.size != 4) {
+                isValidIp = false
+            }
+        } catch (e) {
+            isValidIp = false
+        }
 
-        udsController.stopUDSServer()
-      }
+        return isValidIp
     }
-  }
 }
