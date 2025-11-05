@@ -44,12 +44,12 @@ class TCP {
                         .write(Packet.createStatuService(portReceiverFrontEnd).toBytes())
                 val incoming = socketServer.accept()
 
-                lateinit var packet: Packet
-                incoming.inputStream.bufferedReader().use { reader ->
+                var packet: Packet?
+                BufferedInputStream(incoming.inputStream).use { reader ->
                     packet = Packet.parseFromStream(reader)
                 }
 
-                if (packet.packetType != PacketType.StatuServiceAck) {}
+                if (packet == null || packet!!.packetType != PacketType.StatuServiceAck) {}
             } catch (e: SocketTimeoutException) {
                 status = DFS_WORKING_STATUS.NOT_OPERATED
             } finally {
