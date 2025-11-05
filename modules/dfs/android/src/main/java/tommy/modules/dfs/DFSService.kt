@@ -7,6 +7,14 @@ import android.os.IBinder
 import tommy.modules.dfs.network.TCP
 
 class DFSService : Service() {
+    companion object {
+        init {
+            System.loadLibrary("dfs")
+        }
+    }
+
+    external fun triggerDfs()
+
     lateinit var threadDFS: Thread
     lateinit var ipDNS: String
     var portDNS: Int = 0
@@ -18,10 +26,10 @@ class DFSService : Service() {
         portReceiver = intent.getIntExtra("PortReceiver", 0).toInt()
 
         // 1. Initialize 'threadDFS'
-        // TODO: HoangLe [Nov-01]: Use above values to start DFS
+        threadDFS = Thread { triggerDfs() }
 
         // 2. Start 'threadDFS'
-        // TODO: HoangLe [Nov-01]: Implement this
+        threadDFS.start()
 
         return START_STICKY
     }
