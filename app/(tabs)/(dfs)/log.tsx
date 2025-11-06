@@ -1,8 +1,9 @@
 import { LogLevel, LogMessage } from "@/models/log-message";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import LogMessageComponent from "../../../components/log-message";
+import * as DfsModule from "../../../modules/dfs";
 
 export default function RetrievalScreen() {
   const [items, setItems] = useState<LogMessage[]>([
@@ -12,6 +13,19 @@ export default function RetrievalScreen() {
   const onClear = () => {
     setItems([]);
   };
+
+  useEffect(() => {
+    const listener = DfsModule.default.addListener<"log">("log", (args) => {
+      const level = LogLevel[args["level"] as keyof typeof LogLevel];
+      const dt = new Date(args["dt"]);
+
+      setItems((log) => [...log, new LogMessage(level, args["content"], dt)]);
+    });
+
+    return () => {
+      listener.remove();
+    };
+  }, [setItems]);
 
   return (
     <SafeAreaView style={styles.outerView}>

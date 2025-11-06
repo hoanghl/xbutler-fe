@@ -16,17 +16,19 @@ enum class DFS_WORKING_STATUS {
 
 class TCP {
     companion object {
-        fun stopDFS(portReceiver: Int) {
-            // =================================================
-            // 1. Craft packet 'OPERATION_STOP'
-            // =================================================
-            val packet = Packet.createGracefulShutdown()
+        fun stopDFS(portReceiver: Int): Unit = runBlocking {
+            launch(Dispatchers.IO) {
+                // =================================================
+                // 1. Craft packet 'OPERATION_STOP'
+                // =================================================
+                val packet = Packet.createGracefulShutdown()
 
-            // =================================================
-            // 2. Send packet to DFS
-            // =================================================
-            val socket = Socket("localhost", portReceiver)
-            socket.outputStream.write(packet.toBytes())
+                // =================================================
+                // 2. Send packet to DFS
+                // =================================================
+                val socket = Socket("localhost", portReceiver)
+                socket.outputStream.write(packet.toBytes())
+            }
         }
 
         fun fetchDFSStatus(portReceiver: Int): DFS_WORKING_STATUS {

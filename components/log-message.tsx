@@ -37,9 +37,10 @@ export default function LogMessageComponent({ message }: Props) {
     "en-US",
     timeOptions
   )} ${hourStr}:${minStr}:${secStr}.${miliSecStr}`;
+  const key = `${formattedDatetime} - ${message.content.slice(0, 10)}`;
 
   return (
-    <View style={styles.container} key={formattedDatetime}>
+    <View style={styles.container} key={key}>
       <Text style={{ ...styles.loglevel, color: logLevelColor }}>
         [{LogLevel[message.level]}]
       </Text>

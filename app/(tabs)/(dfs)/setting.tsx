@@ -2,6 +2,8 @@ import { IP } from "@/models/ip";
 import { useState } from "react";
 import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
 
+import * as DfsModule from "../../../modules/dfs";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
@@ -60,7 +62,7 @@ export default function DFSSettingScreen() {
 
     // Triger DFS
     setIsStarted(!isStarted);
-    // TODO: HoangLe [Nov-01]: Trigger DFS
+    DfsModule.default.startDFS(ipDNS, portDNS, portReceiver);
   };
 
   const renderStatus = () => (

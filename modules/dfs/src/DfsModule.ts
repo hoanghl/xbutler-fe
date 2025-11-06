@@ -3,9 +3,8 @@ import { NativeModule, requireNativeModule } from "expo";
 import { DfsModuleEvents } from "./Dfs.types";
 
 declare class DfsModule extends NativeModule<DfsModuleEvents> {
-  PI: number;
   stopDFS(): void;
-  startDFS(rawIpDNS: number[]): void;
+  startDFS(rawIpDNS: String, portDNS: number, portReceiver: number): void;
   getDFSStatus(): string;
 }
 

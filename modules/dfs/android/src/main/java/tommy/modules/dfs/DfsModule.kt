@@ -3,7 +3,7 @@ package tommy.modules.dfs
 import android.content.Intent
 import android.net.*
 import android.util.Log
-import com.facebook.react.bridge.ReadableArray
+import expo.modules.core.interfaces.services.EventEmitter
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import java.net.*
@@ -19,6 +19,8 @@ class DfsModule : Module() {
     lateinit var ipDNS: String
     var portDNS: Int = 0
     var portReceiver: Int = 0
+
+    private lateinit var emitter: EventEmitter
 
     @kotlin.time.ExperimentalTime
     override fun definition() = ModuleDefinition {
@@ -45,8 +47,8 @@ class DfsModule : Module() {
             val intent =
                     Intent(reactContext, DFSService::class.java).apply {
                         putExtra("IpDNS", ipDNS)
-                        putExtra("portDNS", portDNS)
-                        putExtra("portReceiver", portReceiver)
+                        putExtra("PortDNS", portDNS)
+                        putExtra("PortReceiver", portReceiver)
                     }
             reactContext.startService(intent)
 
@@ -70,17 +72,15 @@ class DfsModule : Module() {
         }
     }
 
-    /**
-     * Check if received IP is IpV4 formt
-     */
+    /** Check if received IP is IpV4 formt */
     private fun checkIp(rawIp: String): Boolean {
         var isValidIp = true
         try {
-            val output = rawIp.split(".").map { it -> it.toByte() }
+            val output = rawIp.split(".").map { it -> it.toInt() }
             if (output.size != 4) {
                 isValidIp = false
             }
-        } catch (e) {
+        } catch (e: Exception) {
             isValidIp = false
         }
 

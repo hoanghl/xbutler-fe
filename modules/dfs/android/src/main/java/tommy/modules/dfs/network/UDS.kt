@@ -19,49 +19,77 @@ class UDS(module: Module, udsPath: String = "central.sock") {
     lateinit var udsJob: Job
 
     @kotlin.time.ExperimentalTime
-    fun startUDSServer(): Unit = runBlocking {
+    fun startUDSServer() {
         Log.i("DFS", "Server listenning on $udsPath")
 
         udsJob =
-                launch(Dispatchers.IO) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    val client = serverSocket.accept()!!
+                    val builder = StringBuilder()
+
+                    Log.i("DFS", "Server receives incoming")
+
+                    // client.inputStream.bufferedReader().use { reader ->
+                    //     val byte = reader.read()
+                    //     if (byte != 0 && byte != -1) {
+                    //         builder.append(byte.toChar())
+                    //     }
+                    // }
+
                     while (true) {
                         if (!isActive) {
                             break
                         }
 
-                        val client = serverSocket.accept()!!
-                        val builder = StringBuilder()
+                        val received = client.inputStream.read()
+                        when (received) {
+                            0 -> {
+                                val msg = LogMessage.parse(builder.toString())
 
-                        Log.i("DFS", "Server receives incoming")
+                                if (msg != null) {
 
-                        client.inputStream.bufferedReader().use { reader ->
-                            val byte = reader.read()
-                            if (byte != 0 && byte != -1) {
-                                builder.append(byte.toChar())
+                                    // setLog(
+                                    //         "Client: Received: ${logMsg.dt.toString()} -
+                                    // ${logMsg.level} - ${logMsg.content}"
+                                    // )
+                                    Log.i("DFS", "Received: ${msg.level}")
+                                    builder.clear()
+
+                                    module.sendEvent(
+                                            "log",
+                                            bundleOf(
+                                                    "level" to msg.level,
+                                                    "dt" to msg.dt.toString(),
+                                                    "content" to msg.content
+                                            )
+                                    )
+                                }
+                            }
+                            else -> {
+                                builder.append(received.toChar())
                             }
                         }
-
-                        val msg = LogMessage.parse(builder.toString())
-
-                        if (msg == null) {
-                            continue
-                        }
-                        Log.i("DFS", "Received: ${msg.level}")
-
-                        module.sendEvent(
-                                "log",
-                                bundleOf(
-                                        "level" to msg.level,
-                                        "dt" to msg.dt.toString(),
-                                        "content" to msg.content
-                                )
-                        )
                     }
+
+                    // val msg = LogMessage.parse(builder.toString())
+
+                    // if (msg == null) {
+                    //     continue
+                    // }
+                    // Log.i("DFS", "Received: ${msg.level}")
+
+                    // module.sendEvent(
+                    //         "log",
+                    //         bundleOf(
+                    //                 "level" to msg.level,
+                    //                 "dt" to msg.dt.toString(),
+                    //                 "content" to msg.content
+                    //         )
+                    // )
                 }
     }
 
     suspend fun stopUDSServer() {
-        udsJob.cancel()
         udsJob.join()
     }
 }
