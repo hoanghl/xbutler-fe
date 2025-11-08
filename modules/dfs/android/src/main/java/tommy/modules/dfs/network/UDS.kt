@@ -20,76 +20,65 @@ class UDS(module: Module, udsPath: String = "central.sock") {
 
     @kotlin.time.ExperimentalTime
     fun startUDSServer() {
-        Log.i("DFS", "Server listenning on $udsPath")
+        Log.i("DFS", "UDS server listenning on $udsPath")
 
         udsJob =
                 CoroutineScope(Dispatchers.IO).launch {
-                    val client = serverSocket.accept()!!
-                    val builder = StringBuilder()
+                    while (isActive) {
+                        val client = serverSocket.accept()!!
 
-                    Log.i("DFS", "Server receives incoming")
+                        client.use {
+                            val builder = StringBuilder()
+                            val bufferedStream = client.inputStream.buffered()
 
-                    // client.inputStream.bufferedReader().use { reader ->
-                    //     val byte = reader.read()
-                    //     if (byte != 0 && byte != -1) {
-                    //         builder.append(byte.toChar())
-                    //     }
-                    // }
+                            while (true) {
+                                val received = bufferedStream.read()
+                                Log.i("DFS", "Server receives incoming: $received")
+                                when (received) {
+                                    0 -> {
+                                        val msg = LogMessage.parse(builder.toString())
 
-                    while (true) {
-                        if (!isActive) {
-                            break
-                        }
+                                        if (msg != null) {
+                                            builder.clear()
 
-                        val received = client.inputStream.read()
-                        when (received) {
-                            0 -> {
-                                val msg = LogMessage.parse(builder.toString())
-
-                                if (msg != null) {
-
-                                    // setLog(
-                                    //         "Client: Received: ${logMsg.dt.toString()} -
-                                    // ${logMsg.level} - ${logMsg.content}"
-                                    // )
-                                    Log.i("DFS", "Received: ${msg.level}")
-                                    builder.clear()
-
-                                    module.sendEvent(
-                                            "log",
-                                            bundleOf(
-                                                    "level" to msg.level,
-                                                    "dt" to msg.dt.toString(),
-                                                    "content" to msg.content
+                                            module.sendEvent(
+                                                    "log",
+                                                    bundleOf(
+                                                            "level" to msg.level,
+                                                            "dt" to msg.dt.toString(),
+                                                            "content" to msg.content
+                                                    )
                                             )
-                                    )
+                                        }
+
+                                        break
+                                    }
+                                    -1 -> break
+                                    else -> {
+                                        builder.append(received.toChar())
+                                    }
                                 }
-                            }
-                            else -> {
-                                builder.append(received.toChar())
                             }
                         }
                     }
 
-                    // val msg = LogMessage.parse(builder.toString())
-
-                    // if (msg == null) {
-                    //     continue
-                    // }
-                    // Log.i("DFS", "Received: ${msg.level}")
-
-                    // module.sendEvent(
-                    //         "log",
-                    //         bundleOf(
-                    //                 "level" to msg.level,
-                    //                 "dt" to msg.dt.toString(),
-                    //                 "content" to msg.content
-                    //         )
-                    // )
+                    Log.i("DFS", "UDS server is stopping")
                 }
     }
 
+    suspend fun triggerUDSGracefulShutdown() {
+        val socket = LocalSocket()
+        socket.connect(LocalSocketAddress(udsPath, LocalSocketAddress.Namespace.ABSTRACT))
+
+        socket.use { socket.outputStream.buffered().write(0) }
+    }
+
     suspend fun stopUDSServer() {
+        Log.i("DFS", "Start stopUDSServer")
+
+        serverSocket.close()
+        udsJob.cancel()
+        triggerUDSGracefulShutdown()
         udsJob.join()
     }
 }

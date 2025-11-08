@@ -59,12 +59,10 @@ class DfsModule : Module() {
         }
 
         Function("stopDFS") {
-            runBlocking {
-                val reactContext = appContext.reactContext!!
-                reactContext.stopService(Intent(reactContext, DFSService::class.java))
+            val reactContext = appContext.reactContext!!
+            reactContext.stopService(Intent(reactContext, DFSService::class.java))
 
-                udsController.stopUDSServer()
-            }
+            runBlocking { udsController.stopUDSServer() }
         }
 
         Function("getDFSStatus") {

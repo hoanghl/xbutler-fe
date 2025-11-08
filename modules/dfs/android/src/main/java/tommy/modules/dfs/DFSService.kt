@@ -47,6 +47,8 @@ class DFSService : Service() {
         TCP.stopDFS(portReceiver)
 
         threadDFS.join()
+
+        super.onDestroy()
     }
 
     override fun onBind(p0: Intent?): IBinder? {

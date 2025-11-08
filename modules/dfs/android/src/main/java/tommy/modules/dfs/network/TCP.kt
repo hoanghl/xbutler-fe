@@ -16,8 +16,8 @@ enum class DFS_WORKING_STATUS {
 
 class TCP {
     companion object {
-        fun stopDFS(portReceiver: Int): Unit = runBlocking {
-            launch(Dispatchers.IO) {
+        fun stopDFS(portReceiver: Int): Unit {
+            CoroutineScope(Dispatchers.IO).launch {
                 // =================================================
                 // 1. Craft packet 'OPERATION_STOP'
                 // =================================================
@@ -26,7 +26,7 @@ class TCP {
                 // =================================================
                 // 2. Send packet to DFS
                 // =================================================
-                val socket = Socket("localhost", portReceiver)
+                val socket = Socket("192.168.0.110", portReceiver)
                 socket.outputStream.write(packet.toBytes())
             }
         }
