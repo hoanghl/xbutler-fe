@@ -27,7 +27,7 @@ class TCP {
                 // 2. Send packet to DFS
                 // =================================================
                 val socket = Socket("192.168.0.110", portReceiver)
-                socket.outputStream.write(packet.toBytes())
+                socket.use { socket.outputStream.write(packet.toBytes()) }
             }
         }
 

@@ -13,19 +13,21 @@ import tommy.modules.dfs.logging.*
 
 class UDS(module: Module, udsPath: String = "central.sock") {
     val udsPath = udsPath
-    val serverSocket = LocalServerSocket(udsPath)
+    var serverSocket: LocalServerSocket? = null
     val module = module
 
     lateinit var udsJob: Job
 
     @kotlin.time.ExperimentalTime
     fun startUDSServer() {
+        serverSocket = LocalServerSocket(udsPath)
+
         Log.i("DFS", "UDS server listenning on $udsPath")
 
         udsJob =
                 CoroutineScope(Dispatchers.IO).launch {
                     while (isActive) {
-                        val client = serverSocket.accept()!!
+                        val client = serverSocket!!.accept()!!
 
                         client.use {
                             val builder = StringBuilder()
@@ -33,13 +35,14 @@ class UDS(module: Module, udsPath: String = "central.sock") {
 
                             while (true) {
                                 val received = bufferedStream.read()
-                                Log.i("DFS", "Server receives incoming: $received")
                                 when (received) {
                                     0 -> {
                                         val msg = LogMessage.parse(builder.toString())
 
                                         if (msg != null) {
                                             builder.clear()
+
+                                            // Log.i("DFS", "${msg.content}")
 
                                             module.sendEvent(
                                                     "log",
@@ -76,7 +79,9 @@ class UDS(module: Module, udsPath: String = "central.sock") {
     suspend fun stopUDSServer() {
         Log.i("DFS", "Start stopUDSServer")
 
-        serverSocket.close()
+        serverSocket!!.close()
+        serverSocket = null
+
         udsJob.cancel()
         triggerUDSGracefulShutdown()
         udsJob.join()

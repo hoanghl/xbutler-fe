@@ -51,8 +51,10 @@ class Packet(packetType: PacketType) {
         }
 
         fun createStatuService(portReceiver: Int): Packet {
-            var packet = Packet(PacketType.Heartbeat)
-            packet.payload.addAll(Packet.cvtInt2BEByteArray(portReceiver, 2).toList())
+            var packet = Packet(PacketType.StatuService)
+
+            val payloadBytes = Packet.cvtInt2BEByteArray(portReceiver)
+            packet.payload.addAll(payloadBytes.slice(payloadBytes.size - 3..payloadBytes.size))
 
             return packet
         }
@@ -61,16 +63,20 @@ class Packet(packetType: PacketType) {
             return Packet(PacketType.GracefulShutdown)
         }
 
-        fun cvtInt2BEByteArray(num: Int, numBytes: Int = 4): ByteArray {
-            return ByteBuffer.allocate(numBytes).order(ByteOrder.BIG_ENDIAN).putInt(num).array()
+        fun cvtInt2BEByteArray(num: Int): ByteArray {
+            return ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(num).array()
         }
     }
 
     fun toBytes(): ByteArray {
         var output = mutableListOf<Byte>()
 
-        output.addAll(Packet.cvtInt2BEByteArray(packetType.ordinal).toList())
-        output.addAll(payload)
+        var bytesPacketType = Packet.cvtInt2BEByteArray(packetType.packetId).toList()
+        output.add(bytesPacketType[bytesPacketType.size - 1])
+        output.addAll(Packet.cvtInt2BEByteArray(0).toList())
+        if (payload.size > 0) {
+            output.addAll(payload)
+        }
 
         return output.toByteArray()
     }
