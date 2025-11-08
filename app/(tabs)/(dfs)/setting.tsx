@@ -13,23 +13,6 @@ export default function DFSSettingScreen() {
   const [portReceiver, setPortReceiver] = useState<number>(0);
   const [ipDNS, setIpDNS] = useState<string>("");
 
-  const _parsePort = (text: string): number | null => {
-    try {
-      const port = parseInt(text);
-      if (port < 0 || port > 65535) {
-        console.error(
-          `Error as parsing port: Port not in inclusive range [0, 65535]: ${port}`
-        );
-        return null;
-      }
-      return port;
-    } catch (error) {
-      console.error(`Error as parsing port: ${error}`);
-
-      return null;
-    }
-  };
-
   const onStartDFS = () => {
     // Parse IP and ports
     const ip = IP.parseFromString(ipDNS);
@@ -65,6 +48,11 @@ export default function DFSSettingScreen() {
     DfsModule.default.startDFS(ipDNS, portDNS, portReceiver);
   };
 
+  const onStopDfs = () => {
+    setIsStarted(!isStarted);
+    DfsModule.default.stopDFS();
+  };
+
   const renderStatus = () => (
     <View
       style={{
@@ -76,7 +64,7 @@ export default function DFSSettingScreen() {
       <Text style={{ fontWeight: "bold", fontSize: 28 }}>DFS</Text>
       <Switch
         trackColor={{ false: "#767577", true: "#10c10080" }}
-        onValueChange={onStartDFS}
+        onValueChange={!isStarted ? onStartDFS : onStopDfs}
         value={isStarted}
       />
     </View>
