@@ -6,9 +6,7 @@ import LogMessageComponent from "../../../components/log-message";
 import * as DfsModule from "../../../modules/dfs";
 
 export default function RetrievalScreen() {
-  const [items, setItems] = useState<LogMessage[]>([
-    new LogMessage(LogLevel.DEBUG, "fsdkfhs"),
-  ]);
+  const [items, setItems] = useState<LogMessage[]>([]);
 
   const onClear = () => {
     setItems([]);

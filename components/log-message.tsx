@@ -37,14 +37,16 @@ export default function LogMessageComponent({ message }: Props) {
     "en-US",
     timeOptions
   )} ${hourStr}:${minStr}:${secStr}.${miliSecStr}`;
-  const key = `${formattedDatetime} - ${message.content.slice(0, 10)}`;
+  const key = `${formattedDatetime} - ${message.content.slice(0, 20)}`;
 
   return (
     <View style={styles.container} key={key}>
-      <Text style={{ ...styles.loglevel, color: logLevelColor }}>
-        [{LogLevel[message.level]}]
-      </Text>
-      <Text style={styles.datetime}>{formattedDatetime}</Text>
+      <View style={{ flexDirection: "row" }}>
+        <Text style={{ ...styles.loglevel, color: logLevelColor }}>
+          [{LogLevel[message.level]}]
+        </Text>
+        <Text style={styles.datetime}>{formattedDatetime}</Text>
+      </View>
       <Text style={styles.content}>{message.content}</Text>
     </View>
   );
@@ -53,7 +55,6 @@ export default function LogMessageComponent({ message }: Props) {
 const styles = StyleSheet.create({
   container: {
     padding: 2,
-    flexDirection: "row",
     alignItems: "flex-start",
   },
   loglevel: {
