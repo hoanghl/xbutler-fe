@@ -1,9 +1,14 @@
 package tommy.modules.dfs
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.net.*
 import android.os.IBinder
+import androidx.core.app.NotificationCompat
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -38,12 +43,42 @@ class DFSService : Service() {
         threadDFS = Thread { triggerDfs(argStr) }
 
         // 2. Start 'threadDFS'
+        val channel =
+                NotificationChannel(
+                        "ForegroundServiceChannelId",
+                        "Foreground Service Channel",
+                        NotificationManager.IMPORTANCE_DEFAULT
+                )
+        // service provided by Android Operating system to show notification outside of our app
+        val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+
         threadDFS.start()
+
+        startForegroundService(intent)
+        start()
 
         return START_STICKY
     }
 
+    private fun start() {
+        val notification =
+                NotificationCompat.Builder(this, "ForegroundServiceChannelId")
+                        .setSmallIcon(R.drawable.ic_launcher_background)
+                        .setContentTitle("Foreground Service")
+                        .setContentText("Foreground service is running")
+                        .build()
+
+        // Start the service in the foreground
+        startForeground(ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE, notification)
+    }
+
     override fun onDestroy() {
+        if (!::threadDFS.isInitialized) {
+            return
+        }
+
         TCP.stopDFS(portReceiver)
 
         threadDFS.join()
