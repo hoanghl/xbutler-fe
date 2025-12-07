@@ -23,8 +23,6 @@ enum class PacketType(val packetId: Int) {
     Notify(15),
     ClientUploadAck(16),
     GracefulShutdown(17),
-    StatuService(18),
-    StatuServiceAck(19);
 
     companion object {
         private val entries = values().associateBy(PacketType::packetId)
@@ -50,8 +48,8 @@ class Packet(packetType: PacketType) {
             return Packet(packetType)
         }
 
-        fun createStatuService(portReceiver: Int): Packet {
-            var packet = Packet(PacketType.StatuService)
+        fun createHeartbeat(portReceiver: Int): Packet {
+            var packet = Packet(PacketType.Heartbeat)
 
             val payloadBytes = Packet.cvtInt2BEByteArray(portReceiver)
             packet.payload.addAll(payloadBytes.slice(payloadBytes.size - 3..payloadBytes.size))

@@ -26,6 +26,8 @@ class TCP {
                 // =================================================
                 // 2. Send packet to DFS
                 // =================================================
+                // TODO: HoangLe [Dec-07]: Replace the following hardcode IP with an automatic
+                // IP-fetching mechanism
                 val socket = Socket("192.168.0.110", portReceiver)
                 socket.use { socket.outputStream.write(packet.toBytes()) }
             }
@@ -35,7 +37,7 @@ class TCP {
             val portReceiverFrontEnd = portReceiver + 1
             var status = DFS_WORKING_STATUS.HEALTHY
 
-            // Send packet 'StatuService' to DFS and wait for incoming StatuServiceAck
+            // Send packet 'Heartbeat' to DFS and wait for incoming HeartbeatAck
             val socketServer = ServerSocket()
             socketServer.soTimeout = 5000
             val socketClient = Socket("localhost", portReceiver)
@@ -43,7 +45,7 @@ class TCP {
             try {
                 socketClient
                         .getOutputStream()
-                        .write(Packet.createStatuService(portReceiverFrontEnd).toBytes())
+                        .write(Packet.createHeartbeat(portReceiverFrontEnd).toBytes())
                 val incoming = socketServer.accept()
 
                 var packet: Packet?
@@ -51,7 +53,7 @@ class TCP {
                     packet = Packet.parseFromStream(reader)
                 }
 
-                if (packet == null || packet!!.packetType != PacketType.StatuServiceAck) {}
+                if (packet == null || packet!!.packetType != PacketType.HeartbeatAck) {}
             } catch (e: SocketTimeoutException) {
                 status = DFS_WORKING_STATUS.NOT_OPERATED
             } finally {
