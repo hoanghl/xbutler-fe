@@ -22,6 +22,10 @@ class DFSService : Service() {
         init {
             System.loadLibrary("dfs")
         }
+
+        const val NOTIFICATION_CHANNEL_ID = "NOTI_CHANNEL"
+        const val NOTIFICATION_CHANNEL_NAME = "DFS foreground service channel"
+        const val NOTIFICATION_ID = 1
     }
 
     external fun triggerDfs(args: String)
@@ -42,11 +46,11 @@ class DFSService : Service() {
 
         threadDFS = Thread { triggerDfs(argStr) }
 
-        // 2. Start 'threadDFS'
+        // 2. Declare and start foreground service-related stuffs
         val channel =
                 NotificationChannel(
-                        "ForegroundServiceChannelId",
-                        "Foreground Service Channel",
+                        NOTIFICATION_CHANNEL_ID,
+                        NOTIFICATION_CHANNEL_NAME,
                         NotificationManager.IMPORTANCE_DEFAULT
                 )
         // service provided by Android Operating system to show notification outside of our app
@@ -54,24 +58,26 @@ class DFSService : Service() {
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
 
-        threadDFS.start()
-
         startForegroundService(intent)
-        start()
-
-        return START_STICKY
-    }
-
-    private fun start() {
         val notification =
-                NotificationCompat.Builder(this, "ForegroundServiceChannelId")
+                NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_launcher_background)
-                        .setContentTitle("Foreground Service")
+                        .setContentTitle("DFS Foreground Service")
                         .setContentText("Foreground service is running")
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                         .build()
 
         // Start the service in the foreground
-        startForeground(ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE, notification)
+        startForeground(
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+        )
+
+        // 3. Start 'threadDFS'
+        threadDFS.start()
+
+        return START_STICKY
     }
 
     override fun onDestroy() {
