@@ -36,6 +36,7 @@ class DFSService : Service() {
 
     lateinit var threadDFS: Thread
     lateinit var ipDNS: IntArray
+    lateinit var ipLocal: String
     var portDNS: Int = 0
     var portReceiver: Int = 0
 
@@ -46,6 +47,7 @@ class DFSService : Service() {
 
         ipDNS = intent!!.getStringExtra("IpDNS")!!.split(".").map { it -> it.toInt() }.toIntArray()
         portDNS = intent.getIntExtra("PortDNS", 0).toInt()
+        ipLocal = intent.getStringExtra("IpLocal")!!
         portReceiver = intent.getIntExtra("PortReceiver", 0).toInt()
 
         // 1. Initialize 'threadDFS'
@@ -94,7 +96,7 @@ class DFSService : Service() {
             return
         }
 
-        TCP.stopDFS(portReceiver)
+        TCP.stopDFS(portReceiver, ipLocal)
 
         threadDFS.join()
 

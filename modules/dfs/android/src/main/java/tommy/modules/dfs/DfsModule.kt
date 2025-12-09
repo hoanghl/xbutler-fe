@@ -1,8 +1,12 @@
 package tommy.modules.dfs
 
+import android.content.Context
 import android.content.Intent
 import android.net.*
+import android.net.wifi.WifiManager
+import android.text.format.Formatter
 import android.util.Log
+import androidx.core.content.getSystemService
 import expo.modules.core.interfaces.services.EventEmitter
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -50,9 +54,14 @@ class DfsModule : Module() {
             // =================================================
 
             val reactContext = appContext.reactContext!!
+            val wifiMngr =
+                    reactContext.applicationContext.getSystemService(Context.WIFI_SERVICE) as
+                            WifiManager
+            val ipLocal = Formatter.formatIpAddress(wifiMngr.connectionInfo.ipAddress)
             val intent =
                     Intent(reactContext, DFSService::class.java).apply {
                         putExtra("IpDNS", ipDNS)
+                        putExtra("IpLocal", ipLocal)
                         putExtra("PortDNS", portDNS)
                         putExtra("PortReceiver", portReceiver)
                     }

@@ -18,7 +18,7 @@ enum class DFS_WORKING_STATUS {
 
 class TCP {
     companion object {
-        fun stopDFS(portReceiver: Int): Unit {
+        fun stopDFS(portReceiver: Int, ipLocal: String): Unit {
             CoroutineScope(Dispatchers.IO).launch {
                 // =================================================
                 // 1. Craft packet 'OPERATION_STOP'
@@ -31,10 +31,14 @@ class TCP {
                 // TODO: HoangLe [Dec-07]: Replace the following hardcode IP with an automatic
                 // IP-fetching mechanism
 
-                Log.d(DfsModule.TAG_LOG, "portReceiver: $portReceiver")
+                Log.d(DfsModule.TAG_LOG, "ipLocal: $ipLocal")
 
-                val socket = Socket("192.168.10.100", portReceiver)
-                socket.use { socket.outputStream.write(packet.toBytes()) }
+                try {
+                    val socket = Socket(ipLocal, portReceiver)
+                    socket.use { socket.outputStream.write(packet.toBytes()) }
+                } catch (e: Exception) {
+                    Log.d(DfsModule.TAG_LOG, e.toString())
+                }
             }
         }
 
