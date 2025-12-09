@@ -45,12 +45,12 @@ export default function DFSSettingScreen() {
 
     // Triger DFS
     setIsStarted(!isStarted);
-    DfsModule.default.startDFS(ipDNS, portDNS, portReceiver);
+    DfsModule.startDFS(ipDNS, portDNS, portReceiver);
   };
 
   const onStopDfs = () => {
     setIsStarted(!isStarted);
-    DfsModule.default.stopDFS();
+    DfsModule.stopDFS();
   };
 
   const renderStatus = () => (

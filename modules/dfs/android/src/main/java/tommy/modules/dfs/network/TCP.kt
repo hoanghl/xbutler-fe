@@ -1,12 +1,14 @@
 package tommy.modules.dfs.network
 
 import android.net.*
+import android.util.Log
 import java.io.*
 import java.net.*
 import java.net.Socket
 import java.nio.channels.*
 import java.nio.file.*
 import kotlinx.coroutines.*
+import tommy.modules.dfs.DfsModule
 import tommy.modules.dfs.logging.*
 
 enum class DFS_WORKING_STATUS {
@@ -28,7 +30,10 @@ class TCP {
                 // =================================================
                 // TODO: HoangLe [Dec-07]: Replace the following hardcode IP with an automatic
                 // IP-fetching mechanism
-                val socket = Socket("192.168.0.110", portReceiver)
+
+                Log.d(DfsModule.TAG_LOG, "portReceiver: $portReceiver")
+
+                val socket = Socket("192.168.10.100", portReceiver)
                 socket.use { socket.outputStream.write(packet.toBytes()) }
             }
         }

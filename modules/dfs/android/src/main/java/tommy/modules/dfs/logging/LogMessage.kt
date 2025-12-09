@@ -6,6 +6,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.*
 import kotlinx.datetime.toLocalDateTime
+import tommy.modules.dfs.DfsModule
 
 @kotlin.time.ExperimentalTime
 class LogMessage(
@@ -32,7 +33,7 @@ class LogMessage(
             try {
                 dt = LocalDateTime.parse(msg.slice(0..16), DT_FORMAT)
             } catch (e: IllegalArgumentException) {
-                Log.e("DFS", e.toString())
+                Log.e(DfsModule.TAG_LOG, e.toString())
                 return null
             }
 
@@ -40,7 +41,7 @@ class LogMessage(
             try {
                 level = LogLevel.valueOf(msg.slice(17..21).removeSuffix(" "))
             } catch (e: IllegalArgumentException) {
-                Log.e("DFS", e.toString())
+                Log.e(DfsModule.TAG_LOG, e.toString())
                 return null
             }
             val content = msg.slice(22..msg.length - 1)

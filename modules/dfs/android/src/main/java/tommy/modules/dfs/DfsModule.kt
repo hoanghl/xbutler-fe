@@ -14,6 +14,10 @@ import tommy.modules.dfs.logging.*
 import tommy.modules.dfs.network.*
 
 class DfsModule : Module() {
+    companion object {
+        const val TAG_LOG = "DFS"
+    }
+
     val udsController = UDS(this@DfsModule)
 
     lateinit var ipDNS: String
@@ -30,8 +34,10 @@ class DfsModule : Module() {
         Events("log")
 
         Function("startDFS") { rawIpDNS: String, portDNS: Int, portReceiver: Int ->
+            Log.d(TAG_LOG, "'startDFS' invoked")
+
             if (!checkIp(rawIpDNS)) {
-                Log.e("DFS", "Invalid passed Ip")
+                Log.e(TAG_LOG, "Invalid passed Ip")
 
                 return@Function
             }
@@ -50,7 +56,7 @@ class DfsModule : Module() {
                         putExtra("PortDNS", portDNS)
                         putExtra("PortReceiver", portReceiver)
                     }
-            reactContext.startService(intent)
+            reactContext.startForegroundService(intent)
 
             // =================================================
             // Start UDS server to receive log

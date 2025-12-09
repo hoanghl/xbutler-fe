@@ -9,6 +9,7 @@ import java.nio.channels.*
 import java.nio.file.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.launch
+import tommy.modules.dfs.DfsModule
 import tommy.modules.dfs.logging.*
 
 class UDS(module: Module, udsPath: String = "central.sock") {
@@ -22,7 +23,7 @@ class UDS(module: Module, udsPath: String = "central.sock") {
     fun startUDSServer() {
         serverSocket = LocalServerSocket(udsPath)
 
-        Log.i("DFS", "UDS server listenning on $udsPath")
+        Log.i(DfsModule.TAG_LOG, "UDS server listenning on $udsPath")
 
         udsJob =
                 CoroutineScope(Dispatchers.IO).launch {
@@ -65,7 +66,7 @@ class UDS(module: Module, udsPath: String = "central.sock") {
                         }
                     }
 
-                    Log.i("DFS", "UDS server is stopping")
+                    Log.i(DfsModule.TAG_LOG, "UDS server is stopping")
                 }
     }
 
@@ -77,7 +78,7 @@ class UDS(module: Module, udsPath: String = "central.sock") {
     }
 
     suspend fun stopUDSServer() {
-        Log.i("DFS", "Start stopUDSServer")
+        Log.i(DfsModule.TAG_LOG, "Start stopUDSServer")
 
         serverSocket!!.close()
         serverSocket = null

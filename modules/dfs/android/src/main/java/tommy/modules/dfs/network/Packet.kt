@@ -4,6 +4,7 @@ import android.util.Log
 import java.io.BufferedInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import tommy.modules.dfs.DfsModule
 
 enum class PacketType(val packetId: Int) {
     Heartbeat(1),
@@ -22,7 +23,7 @@ enum class PacketType(val packetId: Int) {
     StateSyncAck(14),
     Notify(15),
     ClientUploadAck(16),
-    GracefulShutdown(17),
+    GracefulShutdown(17);
 
     companion object {
         private val entries = values().associateBy(PacketType::packetId)
@@ -40,7 +41,10 @@ class Packet(packetType: PacketType) {
             var byte = reader.read()
             val packetType = PacketType.fromInt(byte)
             if (packetType == null) {
-                Log.e("DFS", "Error as converting packet type from received byte: ${byte}")
+                Log.e(
+                        DfsModule.TAG_LOG,
+                        "Error as converting packet type from received byte: ${byte}"
+                )
 
                 return null
             }

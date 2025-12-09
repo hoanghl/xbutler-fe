@@ -8,7 +8,9 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.*
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -26,6 +28,8 @@ class DFSService : Service() {
         const val NOTIFICATION_CHANNEL_ID = "NOTI_CHANNEL"
         const val NOTIFICATION_CHANNEL_NAME = "DFS foreground service channel"
         const val NOTIFICATION_ID = 1
+
+        var isServiceCreated = false
     }
 
     external fun triggerDfs(args: String)
@@ -36,6 +40,10 @@ class DFSService : Service() {
     var portReceiver: Int = 0
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (DFSService.isServiceCreated == true) {
+            return START_NOT_STICKY
+        }
+
         ipDNS = intent!!.getStringExtra("IpDNS")!!.split(".").map { it -> it.toInt() }.toIntArray()
         portDNS = intent.getIntExtra("PortDNS", 0).toInt()
         portReceiver = intent.getIntExtra("PortReceiver", 0).toInt()
@@ -58,7 +66,6 @@ class DFSService : Service() {
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
 
-        startForegroundService(intent)
         val notification =
                 NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_launcher_background)
@@ -68,7 +75,8 @@ class DFSService : Service() {
                         .build()
 
         // Start the service in the foreground
-        startForeground(
+        ServiceCompat.startForeground(
+                this,
                 NOTIFICATION_ID,
                 notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
@@ -76,8 +84,9 @@ class DFSService : Service() {
 
         // 3. Start 'threadDFS'
         threadDFS.start()
+        Log.d(DfsModule.TAG_LOG, "Foreground service created")
 
-        return START_STICKY
+        return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onDestroy() {
@@ -88,6 +97,8 @@ class DFSService : Service() {
         TCP.stopDFS(portReceiver)
 
         threadDFS.join()
+
+        DFSService.isServiceCreated = false
 
         super.onDestroy()
     }
