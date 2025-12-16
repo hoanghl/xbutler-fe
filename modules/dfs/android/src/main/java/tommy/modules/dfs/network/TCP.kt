@@ -28,8 +28,6 @@ class TCP {
                 // =================================================
                 // 2. Send packet to DFS
                 // =================================================
-                // TODO: HoangLe [Dec-07]: Replace the following hardcode IP with an automatic
-                // IP-fetching mechanism
 
                 Log.d(DfsModule.TAG_LOG, "ipLocal: $ipLocal")
 
@@ -48,7 +46,7 @@ class TCP {
 
             // Send packet 'Heartbeat' to DFS and wait for incoming HeartbeatAck
             val socketServer = ServerSocket()
-            socketServer.soTimeout = 5000
+            socketServer.soTimeout = 2000
             val socketClient = Socket("localhost", portReceiver)
 
             try {

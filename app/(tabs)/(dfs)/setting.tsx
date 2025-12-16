@@ -1,17 +1,96 @@
 import { IP } from "@/models/ip";
+import { useFocusEffect } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
-
-import * as DfsModule from "../../../modules/dfs";
-
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+
+import { AsyncStorage } from "@/utils/async-storage";
+import * as DfsModule from "../../../modules/dfs";
+import { DFS_WORKING_STATUS } from "../../../modules/dfs";
+
+const INTERVAL_STATUS_FETCH = 2000.0; // in miliseconds
 
 export default function DFSSettingScreen() {
   const [isStarted, setIsStarted] = useState<boolean>(false);
   const [portDNS, setPortDNS] = useState<number>(0);
   const [portReceiver, setPortReceiver] = useState<number>(0);
   const [ipDNS, setIpDNS] = useState<string>("");
+
+  const fetchDfsStatus = (): DFS_WORKING_STATUS => {
+    const status_raw = DfsModule.getDFSStatus();
+    return Object.values(DFS_WORKING_STATUS).includes(
+      status_raw as DFS_WORKING_STATUS
+    )
+      ? (status_raw as DFS_WORKING_STATUS)
+      : DFS_WORKING_STATUS.NOT_OPERATED;
+  };
+
+  useFocusEffect(() => {
+    const id = setInterval(() => {
+      let ipDns: string | undefined = "";
+      let portDns: number | undefined = -1;
+      let portReceiver: number | undefined = -1;
+      let isStarted = false;
+
+      // 1. Fetch status by invoking native function
+      // 2. Based on fetched status, behave differently
+      switch (fetchDfsStatus()) {
+        case DFS_WORKING_STATUS.HEALTHY:
+          // Load configurations from async storage
+          let isLoadedConfigSuccessfully = true;
+
+          ipDns = AsyncStorage.IP_DNS;
+          if (ipDns === undefined) {
+            Toast.show({
+              type: "error",
+              text1: "Error as retrieving IP of DNS from async storage",
+            });
+            isLoadedConfigSuccessfully = false;
+          }
+
+          portDns = AsyncStorage.PORT_DNS;
+          if (portDns === undefined && isLoadedConfigSuccessfully) {
+            Toast.show({
+              type: "error",
+              text1: "Error as retrieving port of DNS from async storage",
+            });
+            isLoadedConfigSuccessfully = false;
+          }
+
+          portReceiver = AsyncStorage.PORT_RECEIVER;
+          if (portReceiver === undefined) {
+            Toast.show({
+              type: "error",
+              text1: "Error as retrieving receiver's port from async storage",
+            });
+            isLoadedConfigSuccessfully = false;
+          }
+
+          if (isLoadedConfigSuccessfully) {
+            isStarted = true;
+          }
+
+          break;
+        case DFS_WORKING_STATUS.NOT_OPERATED: {
+          Toast.show({
+            type: "error",
+            text1: "Error as parsing IP",
+          });
+        }
+
+        default:
+          break;
+      }
+
+      setIsStarted(isStarted);
+      setIpDNS(ipDNS);
+      setPortDNS(portDNS);
+      setPortReceiver(portReceiver);
+    }, INTERVAL_STATUS_FETCH);
+
+    return () => clearInterval(id);
+  });
 
   const onStartDFS = () => {
     // Parse IP and ports
@@ -42,6 +121,9 @@ export default function DFSSettingScreen() {
 
       return;
     }
+
+    // TODO: HoangLe [Dec-14]: Store newly parsed configurations to async storage
+    AsyncStorage.IP_DNS(ipDNS!);
 
     // Triger DFS
     setIsStarted(!isStarted);

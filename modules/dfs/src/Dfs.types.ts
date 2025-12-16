@@ -1,4 +1,4 @@
-import type { StyleProp, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from "react-native";
 
 export type OnLoadEventPayload = {
   url: string;
@@ -17,3 +17,8 @@ export type DfsViewProps = {
   onLoad: (event: { nativeEvent: OnLoadEventPayload }) => void;
   style?: StyleProp<ViewStyle>;
 };
+
+export enum DFS_WORKING_STATUS {
+  HEALTHY = "HEALTHY",
+  NOT_OPERATED = "NOT_OPERATED",
+}
