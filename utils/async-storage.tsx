@@ -13,27 +13,19 @@ export class AsyncStorageUtils {
     await AsyncStorage.setItem(this.KEY_IP_DNS, ipDNS);
   }
 
-  static async getPortDns(): Promise<string | null> {
-    return await AsyncStorage.getItem(this.KEY_PORT_DNS);
+  static async getPortDns(): Promise<number | null> {
+    return Number(await AsyncStorage.getItem(this.KEY_PORT_DNS));
   }
 
   static async setPortDns(portDns: string) {
     await AsyncStorage.setItem(this.KEY_PORT_DNS, portDns);
   }
 
-  static get PORT_DNS(): number | null {
-    // TODO: HoangLe [Dec-09]: Retrieve from local async storage
+  static async getPortRecevier(): Promise<number | null> {
+    return Number(await AsyncStorage.getItem(this.KEY_PORT_DNS));
   }
 
-  static set PORT_DNS(portDNS: number) {
-    // TODO: HoangLe [Dec-09]: Assign from local async storage
-  }
-
-  static get PORT_RECEIVER(): number | null {
-    // TODO: HoangLe [Dec-09]: Retrieve from local async storage
-  }
-
-  static set PORT_RECEIVER(portReceiver: number) {
-    // TODO: HoangLe [Dec-09]: Assign from local async storage
+  static async setPortReceiver(portReceiver: string) {
+    await AsyncStorage.setItem(this.KEY_PORT_DNS, portReceiver);
   }
 }

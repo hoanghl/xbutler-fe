@@ -5,7 +5,7 @@ import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
-import { AsyncStorage } from "@/utils/async-storage";
+import { AsyncStorageUtils } from "@/utils/async-storage";
 import * as DfsModule from "../../../modules/dfs";
 import { DFS_WORKING_STATUS } from "../../../modules/dfs";
 
@@ -27,10 +27,10 @@ export default function DFSSettingScreen() {
   };
 
   useFocusEffect(() => {
-    const id = setInterval(() => {
-      let ipDns: string | undefined = "";
-      let portDns: number | undefined = -1;
-      let portReceiver: number | undefined = -1;
+    const id = setInterval(async () => {
+      let ipDns = "";
+      let portDns = -1;
+      let portReceiver = -1;
       let isStarted = false;
 
       // 1. Fetch status by invoking native function
@@ -40,7 +40,7 @@ export default function DFSSettingScreen() {
           // Load configurations from async storage
           let isLoadedConfigSuccessfully = true;
 
-          ipDns = AsyncStorage.IP_DNS;
+          ipDns = (await AsyncStorageUtils.getIpDns())!;
           if (ipDns === undefined) {
             Toast.show({
               type: "error",
@@ -49,7 +49,7 @@ export default function DFSSettingScreen() {
             isLoadedConfigSuccessfully = false;
           }
 
-          portDns = AsyncStorage.PORT_DNS;
+          portDns = (await AsyncStorageUtils.getPortDns())!;
           if (portDns === undefined && isLoadedConfigSuccessfully) {
             Toast.show({
               type: "error",
@@ -58,7 +58,7 @@ export default function DFSSettingScreen() {
             isLoadedConfigSuccessfully = false;
           }
 
-          portReceiver = AsyncStorage.PORT_RECEIVER;
+          portReceiver = (await AsyncStorageUtils.getPortRecevier())!;
           if (portReceiver === undefined) {
             Toast.show({
               type: "error",
@@ -122,16 +122,13 @@ export default function DFSSettingScreen() {
       return;
     }
 
-    // TODO: HoangLe [Dec-14]: Store newly parsed configurations to async storage
-    AsyncStorage.IP_DNS(ipDNS!);
+    AsyncStorageUtils.setIpDns(ipDNS!);
 
     // Triger DFS
-    setIsStarted(!isStarted);
     DfsModule.startDFS(ipDNS, portDNS, portReceiver);
   };
 
   const onStopDfs = () => {
-    setIsStarted(!isStarted);
     DfsModule.stopDFS();
   };
 
