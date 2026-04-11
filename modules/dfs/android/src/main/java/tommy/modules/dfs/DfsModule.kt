@@ -1,0 +1,102 @@
+package tommy.modules.dfs
+
+import android.content.Context
+import android.content.Intent
+import android.net.*
+import android.net.wifi.WifiManager
+import android.text.format.Formatter
+import android.util.Log
+import androidx.core.content.getSystemService
+import expo.modules.core.interfaces.services.EventEmitter
+import expo.modules.kotlin.modules.Module
+import expo.modules.kotlin.modules.ModuleDefinition
+import java.net.*
+import java.nio.channels.*
+import java.nio.file.*
+import kotlinx.coroutines.*
+import tommy.modules.dfs.logging.*
+import tommy.modules.dfs.network.*
+
+class DfsModule : Module() {
+    companion object {
+        const val TAG_LOG = "DFS"
+    }
+
+    val udsController = UDS(this@DfsModule)
+
+    lateinit var ipDNS: String
+    var portDNS: Int = 0
+    var portReceiver: Int = 0
+
+    private lateinit var emitter: EventEmitter
+
+    @kotlin.time.ExperimentalTime
+    override fun definition() = ModuleDefinition {
+        Name("Dfs")
+
+        // Defines event names that the module can send to JavaScript.
+        Events("log")
+
+        Function("startDFS") { rawIpDNS: String, portDNS: Int, portReceiver: Int ->
+            Log.d(TAG_LOG, "'startDFS' invoked")
+
+            if (!checkIp(rawIpDNS)) {
+                Log.e(TAG_LOG, "Invalid passed Ip")
+
+                return@Function
+            }
+            this@DfsModule.ipDNS = rawIpDNS
+            this@DfsModule.portDNS = portDNS
+            this@DfsModule.portReceiver = portReceiver
+
+            // =================================================
+            // Start service
+            // =================================================
+
+            val reactContext = appContext.reactContext!!
+            val wifiMngr =
+                    reactContext.applicationContext.getSystemService(Context.WIFI_SERVICE) as
+                            WifiManager
+            val ipLocal = Formatter.formatIpAddress(wifiMngr.connectionInfo.ipAddress)
+            val intent =
+                    Intent(reactContext, DFSService::class.java).apply {
+                        putExtra("IpDNS", ipDNS)
+                        putExtra("IpLocal", ipLocal)
+                        putExtra("PortDNS", portDNS)
+                        putExtra("PortReceiver", portReceiver)
+                    }
+            reactContext.startForegroundService(intent)
+
+            // =================================================
+            // Start UDS server to receive log
+            // =================================================
+            udsController.startUDSServer()
+        }
+
+        Function("stopDFS") {
+            val reactContext = appContext.reactContext!!
+            reactContext.stopService(Intent(reactContext, DFSService::class.java))
+
+            runBlocking { udsController.stopUDSServer() }
+        }
+
+        Function("getDFSStatus") {
+            return@Function TCP.fetchDFSStatus(portReceiver).name
+        }
+    }
+
+    /** Check if received IP is IpV4 formt */
+    private fun checkIp(rawIp: String): Boolean {
+        var isValidIp = true
+        try {
+            val output = rawIp.split(".").map { it -> it.toInt() }
+            if (output.size != 4) {
+                isValidIp = false
+            }
+        } catch (e: Exception) {
+            isValidIp = false
+        }
+
+        return isValidIp
+    }
+}
