@@ -56,7 +56,7 @@ class Packet(packetType: PacketType) {
             var packet = Packet(PacketType.Heartbeat)
 
             val payloadBytes = Packet.cvtInt2BEByteArray(portReceiver)
-            packet.payload.addAll(payloadBytes.slice(payloadBytes.size - 3..payloadBytes.size))
+            packet.payload.addAll(payloadBytes.slice(payloadBytes.size - 2..payloadBytes.size - 1))
 
             return packet
         }
@@ -73,9 +73,14 @@ class Packet(packetType: PacketType) {
     fun toBytes(): ByteArray {
         var output = mutableListOf<Byte>()
 
+        // Add packet type
         var bytesPacketType = Packet.cvtInt2BEByteArray(packetType.packetId).toList()
         output.add(bytesPacketType[bytesPacketType.size - 1])
-        output.addAll(Packet.cvtInt2BEByteArray(0).toList())
+
+        // Add payload size
+        output.addAll(Packet.cvtInt2BEByteArray(payload.size).toList())
+
+        // Add payload
         if (payload.size > 0) {
             output.addAll(payload)
         }

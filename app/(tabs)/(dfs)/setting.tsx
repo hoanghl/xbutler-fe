@@ -6,10 +6,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 import { AsyncStorageUtils } from "@/utils/async-storage";
+import { debug, log } from "@/utils/log";
 import * as DfsModule from "../../../modules/dfs";
 import { DFS_WORKING_STATUS } from "../../../modules/dfs";
 
-const INTERVAL_STATUS_FETCH = 2000.0; // in miliseconds
+const INTERVAL_STATUS_FETCH = 5000.0; // in miliseconds
 
 export default function DFSSettingScreen() {
   const [isStarted, setIsStarted] = useState<boolean>(false);
@@ -19,8 +20,11 @@ export default function DFSSettingScreen() {
 
   const fetchDfsStatus = (): DFS_WORKING_STATUS => {
     const status_raw = DfsModule.getDFSStatus();
+
+    debug(`status_raw: ${status_raw}`);
+
     return Object.values(DFS_WORKING_STATUS).includes(
-      status_raw as DFS_WORKING_STATUS
+      status_raw as DFS_WORKING_STATUS,
     )
       ? (status_raw as DFS_WORKING_STATUS)
       : DFS_WORKING_STATUS.NOT_OPERATED;
@@ -28,6 +32,10 @@ export default function DFSSettingScreen() {
 
   useFocusEffect(() => {
     const id = setInterval(async () => {
+      if (ipDNS == "") {
+        return;
+      }
+
       let ipDns = "";
       let portDns = -1;
       let portReceiver = -1;
@@ -41,6 +49,7 @@ export default function DFSSettingScreen() {
           let isLoadedConfigSuccessfully = true;
 
           ipDns = (await AsyncStorageUtils.getIpDns())!;
+          log(`ipDns: ${ipDns}`);
           if (ipDns === undefined) {
             Toast.show({
               type: "error",
@@ -50,6 +59,7 @@ export default function DFSSettingScreen() {
           }
 
           portDns = (await AsyncStorageUtils.getPortDns())!;
+          log(`portDns: ${portDns}`);
           if (portDns === undefined && isLoadedConfigSuccessfully) {
             Toast.show({
               type: "error",
@@ -59,6 +69,7 @@ export default function DFSSettingScreen() {
           }
 
           portReceiver = (await AsyncStorageUtils.getPortRecevier())!;
+          log(`portReceiver: ${portReceiver}`);
           if (portReceiver === undefined) {
             Toast.show({
               type: "error",
@@ -75,7 +86,7 @@ export default function DFSSettingScreen() {
         case DFS_WORKING_STATUS.NOT_OPERATED: {
           Toast.show({
             type: "error",
-            text1: "Error as parsing IP",
+            text1: "DFS not operated",
           });
         }
 
@@ -83,10 +94,11 @@ export default function DFSSettingScreen() {
           break;
       }
 
-      setIsStarted(isStarted);
-      setIpDNS(ipDNS);
-      setPortDNS(portDNS);
-      setPortReceiver(portReceiver);
+      // FIXME: HoangLe [Feb-08]: Temporarily disable the following file for debugging. Turn on it
+      // setIsStarted(isStarted);
+      // setIpDNS(ipDNS);
+      // setPortDNS(portDNS);
+      // setPortReceiver(portReceiver);
     }, INTERVAL_STATUS_FETCH);
 
     return () => clearInterval(id);
@@ -126,10 +138,15 @@ export default function DFSSettingScreen() {
 
     // Triger DFS
     DfsModule.startDFS(ipDNS, portDNS, portReceiver);
+
+    //
+    setIsStarted(true);
   };
 
   const onStopDfs = () => {
     DfsModule.stopDFS();
+
+    setIsStarted(false);
   };
 
   const renderStatus = () => (

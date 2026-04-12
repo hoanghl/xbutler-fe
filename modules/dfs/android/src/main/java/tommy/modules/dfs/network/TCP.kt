@@ -40,35 +40,76 @@ class TCP {
             }
         }
 
-        fun fetchDFSStatus(portReceiver: Int): DFS_WORKING_STATUS {
-            val portReceiverFrontEnd = portReceiver + 1
+        private suspend fun fetchDFSStatusServer(
+                ipCurrentDevice: String,
+                portReceiver: Int,
+                serverReady: CompletableDeferred<Unit>,
+                timeout: Int = 10_000
+        ): DFS_WORKING_STATUS {
             var status = DFS_WORKING_STATUS.HEALTHY
 
-            // Send packet 'Heartbeat' to DFS and wait for incoming HeartbeatAck
             val socketServer = ServerSocket()
-            socketServer.soTimeout = 2000
-            val socketClient = Socket("localhost", portReceiver)
+            socketServer.soTimeout = timeout
+            socketServer.bind(InetSocketAddress(ipCurrentDevice, portReceiver))
+            serverReady.complete(Unit)
+
+            val incoming = socketServer.accept()
 
             try {
-                socketClient
-                        .getOutputStream()
-                        .write(Packet.createHeartbeat(portReceiverFrontEnd).toBytes())
-                val incoming = socketServer.accept()
-
                 var packet: Packet?
                 BufferedInputStream(incoming.inputStream).use { reader ->
                     packet = Packet.parseFromStream(reader)
                 }
 
-                if (packet == null || packet!!.packetType != PacketType.HeartbeatAck) {}
+                Log.d(DfsModule.TAG_LOG, "fetchDFSStatus: here 4")
+
+                if (packet == null || packet!!.packetType != PacketType.HeartbeatAck) {
+                    // TODO: HoangLe [Jan-01]: Do something herere
+
+                    Log.d(DfsModule.TAG_LOG, "fetchDFSStatus: here 5")
+                    Log.d(DfsModule.TAG_LOG, "fetchDFSStatus: packet: ${packet?.packetType}")
+                }
             } catch (e: SocketTimeoutException) {
                 status = DFS_WORKING_STATUS.NOT_OPERATED
+
+                Log.d(DfsModule.TAG_LOG, "fetchDFSStatus: here 6")
             } finally {
-                socketClient.close()
                 socketServer.close()
             }
 
             return status
         }
+
+        private suspend fun fetchDFSStatusClient(ipCurrentDevice: String, portReceiver: Int): Unit {
+            val socketClient = Socket(ipCurrentDevice, portReceiver)
+            socketClient.getOutputStream().write(Packet.createHeartbeat(portReceiver).toBytes())
+
+            socketClient.close()
+        }
+
+        fun fetchDFSStatus(portReceiver: Int, ipCurrentDevice: String): DFS_WORKING_STATUS =
+                runBlocking<DFS_WORKING_STATUS> {
+                    val portReceiverFrontEnd = portReceiver + 1
+                    val serverReady = CompletableDeferred<Unit>()
+
+                    // Start listening server
+                    val status_defered =
+                            CoroutineScope(Dispatchers.IO).async {
+                                fetchDFSStatusServer(ipCurrentDevice, portReceiverFrontEnd, serverReady)
+                            }
+
+                    // Wait until server is bound before sending heartbeat
+                    serverReady.await()
+
+                    // Send packet 'Heartbeat' to DFS and wait for incoming HeartbeatAck
+                    fetchDFSStatusClient(ipCurrentDevice, portReceiverFrontEnd)
+
+                    // Fetch result from server
+                    val status = status_defered.await()
+
+                    Log.d(DfsModule.TAG_LOG, "fetchDFSStatus: here 7")
+
+                    status
+                }
     }
 }
