@@ -25,6 +25,7 @@ class DfsModule : Module() {
     val udsController = UDS(this@DfsModule)
 
     lateinit var ipDNS: String
+    lateinit var ipLocal: String
     var portDNS: Int = 0
     var portReceiver: Int = 0
 
@@ -58,6 +59,7 @@ class DfsModule : Module() {
                     reactContext.applicationContext.getSystemService(Context.WIFI_SERVICE) as
                             WifiManager
             val ipLocal = Formatter.formatIpAddress(wifiMngr.connectionInfo.ipAddress)
+            this@DfsModule.ipLocal = ipLocal
             val intent =
                     Intent(reactContext, DFSService::class.java).apply {
                         putExtra("IpDNS", ipDNS)
@@ -81,7 +83,10 @@ class DfsModule : Module() {
         }
 
         Function("getDFSStatus") {
-            return@Function TCP.fetchDFSStatus(portReceiver).name
+            if (portReceiver == 0 || !::ipLocal.isInitialized) {
+                return@Function DFS_WORKING_STATUS.NOT_OPERATED.name
+            }
+            return@Function TCP.fetchDFSStatus(portReceiver, ipLocal).name
         }
     }
 
